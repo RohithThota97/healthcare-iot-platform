@@ -83,4 +83,3 @@ This is a software-development project, not a clinical decision-making system. D
 ## Current status
 
 The initial repository scaffold and 20-day plan are in place. Implementation will be added incrementally in later work.
-
