@@ -1,0 +1,19 @@
+topics:
+  - name: vitals.raw.v1
+    partitions: 12
+    cleanup_policy: delete
+    schema: schemas/vital_event.avsc
+  - name: clinical.raw.v1
+    partitions: 6
+    cleanup_policy: delete
+    schema: schemas/clinical_event.avsc
+  - name: vitals.alert-candidate.v1
+    partitions: 6
+    cleanup_policy: compact,delete
+    schema: schemas/vital_event.avsc
+  - name: vitals.dlq.v1
+    partitions: 6
+    cleanup_policy: compact,delete
+  - name: quality.events.v1
+    partitions: 3
+    cleanup_policy: compact,delete

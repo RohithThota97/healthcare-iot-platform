@@ -1,0 +1,31 @@
+stages: [validate, data, model, deploy]
+
+default:
+  image: python:3.12-slim
+
+validate:
+  stage: validate
+  script:
+    - apt-get update -qq && apt-get install -y -qq docker.io
+    - make validate
+
+data-contracts:
+  stage: data
+  script:
+    - python -m json.tool schemas/vital_event.avsc >/dev/null
+    - python -m json.tool schemas/clinical_event.avsc >/dev/null
+  rules:
+    - changes: ["schemas/**/*", "processing/**/*", "ingestion/**/*"]
+
+model-artifacts:
+  stage: model
+  script:
+    - echo "Train/evaluate and register only from an approved, de-identified dataset"
+  rules:
+    - changes: ["models/**/*"]
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deployment requires protected environment credentials and manual approval"
+  when: manual

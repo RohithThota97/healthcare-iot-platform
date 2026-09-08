@@ -80,6 +80,28 @@ Only synthetic or properly de-identified data should be used.
 
 This is a software-development project, not a clinical decision-making system. Do not commit protected health information, real patient identifiers, credentials, model secrets, or unapproved medical content. Any future model output must be clearly labeled as experimental and reviewed for clinical safety before use.
 
+## Enhanced architecture
+
+The platform now separates real-time alerting from batch analytics:
+
+- Kafka plus Schema Registry carries versioned Avro/Protobuf vitals and HL7/FHIR-normalized events. Kafka Streams/Flink computes windows, drift signals, and experimental early-warning candidates; malformed messages go to a replayable DLQ.
+- S3 and Delta Lake provide bronze, silver, and gold layers. PySpark handles resampling, interpolation, duplicate detection, and artifact rejection. Databricks Unity Catalog governs lineage and masking; Snowflake is an independent BI-serving path.
+- Feast or Databricks Feature Store keeps online and batch features consistent. MLflow records model lineage and promotion gates. Outputs are experimental decision support, not diagnoses.
+- Neo4j models patient trajectories while pgvector or Weaviate supports semantic retrieval. LangGraph coordinates retrieval, reasoning, and safety agents with provenance and audit requirements.
+- Airflow separates five-minute quality/recovery checks from nightly batch work. Prometheus/Grafana monitors lag, freshness, DLQs, quality failures, drift, and latency.
+
+See [docs/architecture.md](docs/architecture.md), [ingestion/README.md](ingestion/README.md), and [ingestion/topics.yaml](ingestion/topics.yaml) for the contracts and operating rules.
+
+## Local development
+
+```bash
+cp .env.example .env
+docker compose up -d
+make validate
+```
+
+The repository excludes raw and generated data, credentials, and model artifacts by default. The downloaded PhysioNet files under `data/raw/` must remain local and be handled under their license.
+
 ## Current status
 
-The initial repository scaffold and 20-day plan are in place. Implementation will be added incrementally in later work.
+Architecture contracts, local service wiring, topic definitions, CI stages, observability configuration, and Airflow SLA skeletons are in place. The next implementation gate is a synthetic event flowing through Kafka, schema validation, a DLQ path, and a bronze sink before enabling model or clinician-facing behavior.

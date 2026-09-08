@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "ClinicalEvent",
+  "namespace": "com.healthcare.iot.v1",
+  "doc": "De-identified HL7/FHIR-normalized event used for trajectory linking.",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "event_time", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "patient_token", "type": "string"},
+    {"name": "encounter_token", "type": "string"},
+    {"name": "event_type", "type": {"type": "enum", "name": "ClinicalEventType", "symbols": ["ADMISSION", "MEDICATION", "PROCEDURE", "LAB", "DISCHARGE", "OUTCOME"]}},
+    {"name": "source_system", "type": "string"},
+    {"name": "payload", "type": "string"},
+    {"name": "schema_version", "type": "string", "default": "1.0.0"}
+  ]
+}
