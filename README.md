@@ -122,6 +122,11 @@ data-quality gates, feature selection, and model evaluation. Full catalog in
 - **Observability**: Prometheus / Grafana on pipeline health, model-drift monitoring, and audit
   logging for HIPAA / GDPR compliance.
 
+See [docs/observability-and-cicd.md](docs/observability-and-cicd.md) for the practical meaning of
+these layers. Prometheus collects platform metrics and evaluates the alert rules in
+[ops/alert-rules.yml](ops/alert-rules.yml); GitLab CI/CD runs validation, quality, secret scanning,
+artifact traceability, and manual protected deployment gates from [.gitlab-ci.yml](.gitlab-ci.yml).
+
 ## Data flow (end to end)
 
 ```text

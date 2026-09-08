@@ -1,0 +1,114 @@
+stages:
+  - validate
+  - quality
+  - security
+  - package
+  - deploy
+
+default:
+  image: python:3.12-slim
+  interruptible: true
+  cache:
+    key: pip-${CI_COMMIT_REF_SLUG}
+    paths:
+      - .cache/pip
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+validate:
+  stage: validate
+  script:
+    - python --version
+    - python -m compileall -q ingestion processing rag tests
+    - python -m json.tool README.md >/dev/null || true
+  rules:
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+data-contracts:
+  stage: quality
+  script:
+    - |
+      python - <<'PY'
+      from pathlib import Path
+
+      raw_dir = Path("data/raw")
+      print(f"Raw data is intentionally excluded from CI: {raw_dir}")
+      for path in sorted(Path("schemas").glob("**/*")):
+          if path.is_file():
+              print(f"Contract candidate: {path}")
+      PY
+  rules:
+    - changes:
+        - schemas/**/*
+        - processing/**/*
+        - ingestion/**/*
+        - README.md
+
+secret-scan:
+  stage: security
+  script:
+  - |
+    python - <<'PY'
+    import re
+    from pathlib import Path
+
+    patterns = [
+      re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+      re.compile(r"(?i)(aws_access_key_id|api_key|password)\s*[:=]\s*['\"][^'\"]+"),
+    ]
+    ignored = {".git", "data/raw"}
+    findings = []
+    for path in Path(".").rglob("*"):
+      if not path.is_file() or any(part in ignored for part in path.parts):
+        continue
+      try:
+        text = path.read_text(errors="ignore")
+      except OSError:
+        continue
+      if any(pattern.search(text) for pattern in patterns):
+        findings.append(str(path))
+    if findings:
+      raise SystemExit(f"Potential secret found in: {', '.join(findings)}")
+    print("No committed secret patterns found")
+    PY
+
+package:
+  stage: package
+  script:
+    - echo "Build data jobs, stream images, and model artifacts here once implementations exist"
+    - echo "Artifacts must include commit SHA, dataset version, schema version, and model version"
+  artifacts:
+    when: always
+    expire_in: 7 days
+    reports:
+      dotenv: build-metadata.env
+  after_script:
+    - printf 'COMMIT_SHA=%s\n' "$CI_COMMIT_SHA" > build-metadata.env
+
+deploy-staging:
+  stage: deploy
+  script:
+    - echo "Deploy to staging using protected environment credentials"
+  environment:
+    name: staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+
+deploy-production:
+  stage: deploy
+  script:
+    - echo "Production deployment requires clinical governance approval"
+  environment:
+    name: production
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual

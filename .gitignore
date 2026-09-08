@@ -1,0 +1,19 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# Local healthcare data and generated artifacts stay outside Git.
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/sample/*
+!data/sample/.gitkeep
+models/saved_models/*
+!models/saved_models/.gitkeep
+*.parquet
+*.db
+mlruns/
